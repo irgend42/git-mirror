@@ -1,0 +1,27 @@
+name: sync
+on:
+  schedule:
+    - cron: '13 */1 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-simutrans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Get code"
+        run: |
+          git clone --bare https://github.com/aburch/simutrans.git
+
+      - name: "Setup ssh"
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{secrets.GIT_MIRROR}}"
+
+      - name: "Push to mirror"
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          cd simutrans.git/
+          git push --mirror git@github.com:irgend42/simutrans.git
